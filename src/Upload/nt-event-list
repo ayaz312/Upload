@@ -1,0 +1,1197 @@
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>/js/jquery.isotope.js?ver=1.5.25"></script>
+<script type='text/javascript' src='<?php bloginfo('template_url'); ?>/js/jplayer.playlist.min.js?ver=2.3.0'></script>
+<script type='text/javascript' src='<?php bloginfo('template_url'); ?>/js/jquery.magnific-popup.min.js?ver=0.9.3'></script>
+
+<script src="<?php bloginfo('template_url'); ?>/inputmask-multi-master/dist/jquery.inputmask.bundle.min.js" type="text/javascript"></script>
+<script src="<?php bloginfo('template_url'); ?>/inputmask-multi-master/js/jquery.inputmask-multi.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="https://js.stripe.com/v1/"></script>
+<script src="<?php bloginfo('template_url'); ?>/NT/js/jquery.maskedinput.js" type="text/javascript"></script>
+
+
+
+<?php
+   // get slug
+	global $post;
+	$post_slug = $post->post_name;
+	
+	$user_link = $_SERVER["REQUEST_URI"];
+	$string = explode('/',$user_link);
+	$affiliate_ID  = ltrim($string[1],$post_slug);
+	$affiliate_role = get_user_role_byid($affiliate_ID);
+	$affiliate_phone = get_user_phone($affiliate_ID);   
+	$affiliate_name = get_user_fname($affiliate_ID); 
+   			
+   ?>
+<?php
+   $upload_dir  = wp_upload_dir();
+   // get venue image name 
+   function get_venue_logo($id)
+   {
+   	$sq = "select * from club_nt_venues where id = $id";
+   	$rst = mysql_query($sq);
+   	$logo = mysql_result($rst , '0' , 'logo' );
+   	return $logo;
+   
+   }
+   
+   
+   
+    // get venue name
+   function get_venu_name_str($venue)
+   {
+   	
+	$arr = explode(',',$venue);
+	unset($name);
+	foreach($arr as $key){
+	
+		$sq = "select * from club_nt_venues where id = $key";
+		$rst = mysql_query($sq);
+		$name[] = mysql_result($rst , '0' , 'name' );
+	 }
+   
+   return $str = implode(',',$name);
+   
+   }
+   
+   
+   // get venue name
+   function get_venue_name($id)
+   {
+   	$sq = "select * from club_nt_venues where id = $id";
+   	$rst = mysql_query($sq);
+   	$name = mysql_result($rst , '0' , 'name' );
+   	return $name;
+   
+   }
+   
+   function get_venue_location($id)
+   {
+		$sq = "select * from club_nt_venues where id = $id";
+		$rst = mysql_query($sq);
+		$location = mysql_result($rst , '0' , 'location' );
+		$location = get_the_title($location);
+		return $location;
+   }
+   
+   
+   	$num_rec_per_page = 6;
+   	if (isset($_GET["custompage"])) { $page  = $_GET["custompage"]; } else { $page=1; }; 
+   	$start_from = ($page-1) * $num_rec_per_page; 
+   	$todaytime = date_i18n('Y-m-d H:i:s'); 
+   	$con = 'where 1=1  ';
+
+   	$sq = 'select TIME_TO_SEC(TIMEDIFF(cnt.event_date , "'.$todaytime.'")) as diff , cnt.* from club_nt as cnt  '.$con.' HAVING (diff > 0) order by event_date LIMIT '.$start_from.', '.$num_rec_per_page.' ';
+   	$rst = mysql_query($sq);
+   	$num = mysql_num_rows($rst);
+   
+   ?>
+<div class="container">
+   <div class="row">
+      <div class="span12" data-motopress-wrapper-file="page-Portfolio3Cols-filterable.php" data-motopress-wrapper-type="content">
+         <div id="content" class="row">
+            <div class="span12" data-motopress-type="loop" data-motopress-loop-file="loop/loop-portfolio3.php">
+               
+               
+               <div class="row">
+                  <div class="span10 topspace"> <?php  if($_SESSION['ERRORMSG']!=''){?> <div class="alert alert-error"><?php echo $_SESSION['ERRORMSG'];unset($_SESSION['ERRORMSG']); ?> </div> <?php } ?></div>
+               </div>
+               
+               
+               
+               
+               <div class="row">
+                  <button name="btn_confirm" style=" display:none;" id="" type="button" class="btn btn-primary sucessbtnt" data-toggle="modal" data-target="#myModal" >Buy Tickets </button>
+               </div>
+               <div class="filter-wrapper clearfix">
+                  <div class="pull-right">
+                     <strong>Categories: </strong>
+                     <ul id="filters" class="filter nav nav-pills">
+                        <li><a href="javascript:void(0);" data-count="<?php echo $num;?>" data-filter=".term_id_1">Night Club Crawls</a></li>
+                        <li ><a href="javascript:void(0);" data-count="<?php echo $num;?>" data-filter=".term_id_2">Day Club Crawls</a></li>
+                     </ul>
+                     <div class="clear"></div>
+                  </div>
+               </div>
+               <div id="portfolio-grid" class="filterable-portfolio thumbnails portfolio-3cols" data-cols="3cols">
+                  <script>
+                     jQuery(document).ready(function($) {
+                     
+                     	var $container = $('#portfolio-grid'),
+                     
+                     		items_count = $(".portfolio_item").size();
+                     
+                     
+                     
+                     	$(window).load(function(){
+                     
+                     		var selector = window.location.hash.replace( /^#category/, '.term' );
+                     
+                     
+                     
+                     		if(selector == "#"){
+                     
+                     			selector = '';
+                     
+                     		}
+                     
+                     
+                     
+                     		setColumnWidth();
+                     
+                     		$container.isotope({
+                     
+                     			itemSelector : '.portfolio_item',
+                     
+                     			hiddenClass : 'portfolio_hidden',
+                     
+                     			resizable : false,
+                     
+                     			transformsEnabled : true,
+                     
+                     			layoutMode: 'fitRows',
+                     
+                     			filter: selector
+                     
+                     		})
+                     
+                     
+                     
+                     		$('#filters .active').removeClass('active')
+                     
+                     		$('#filters li a[data-filter="'+selector+'"]').parent('li').addClass('active');
+                     
+                     		change_hash(selector);
+                     
+                     
+                     
+                     		$(window).on("debouncedresize", function( event ) {
+                     
+                     			arrange();
+                     
+                     		});
+                     
+                     	});
+                     
+                     
+                     
+                     	function getNumColumns(){
+                     
+                     		var $folioWrapper = $('#portfolio-grid').data('cols');
+                     
+                     
+                     
+                     		if($folioWrapper == '2cols') {
+                     
+                     			var winWidth = $("#portfolio-grid").width(),
+                     
+                     				column = 2;
+                     
+                     			if (winWidth<380) column = 1;
+                     
+                     			return column;
+                     
+                     		}
+                     
+                     
+                     
+                     		else if ($folioWrapper == '3cols') {
+                     
+                     			var winWidth = $("#portfolio-grid").width(),
+                     
+                     				column = 3;
+                     
+                     			if (winWidth<568) column = 1;
+                     
+                     			else if(winWidth>=568 && winWidth<788) column = 2;
+                     
+                     			else if(winWidth>=788 && winWidth<1160) column = 3;
+                     
+                     			else if(winWidth>=1160) column = 3;
+                     
+                     			return column;
+                     
+                     		}
+                     
+                     
+                     
+                     		else if ($folioWrapper == '4cols') {
+                     
+                     			var winWidth = $("#portfolio-grid").width(),
+                     
+                     				column = 4;
+                     
+                     			if (winWidth<380) column = 1;
+                     
+                     			else if(winWidth>=380 && winWidth<788) column = 2;
+                     
+                     			else if(winWidth>=788 && winWidth<1160) column = 3;
+                     
+                     			else if(winWidth>=1160) column = 4;
+                     
+                     			return column;
+                     
+                     		}
+                     
+                     	}
+                     
+                     
+                     
+                     	function setColumnWidth(){
+                     
+                     		var columns = getNumColumns(),
+                     
+                     			containerWidth = $("#portfolio-grid").width(),
+                     
+                     			postWidth = containerWidth/columns;
+                     
+                     		postWidth = Math.floor(postWidth);
+                     
+                     
+                     
+                     		$(".portfolio_item").each(function(index){
+                     
+                     			$(this).css({"width":postWidth+"px"});
+                     
+                     		});
+                     
+                     	}
+                     
+                     
+                     
+                     	function arrange(){
+                     
+                     		setColumnWidth();
+                     
+                     		$container.isotope('reLayout');
+                     
+                     	}
+                     
+                     
+                     
+                     	// Filter projects
+                     
+                     	$('.filter a').click(function(){
+                     
+                     		var $this = $(this).parent('li');
+                     
+                     		// don't proceed if already active
+                     
+                     		if ( $this.hasClass('active') ) {
+                     
+                     			return;
+                     
+                     		}
+                     
+                     
+                     
+                     
+                     
+                     		var $optionSet = $this.parents('.filter');
+                     
+                     		// change active class
+                     
+                     		$optionSet.find('.active').removeClass('active');
+                     
+                     		$this.addClass('active');
+                     
+                     
+                     
+                     		var selector = $(this).attr('data-filter');
+                     
+                     		$container.isotope({ filter: selector });
+                     
+                     		change_hash(selector)
+                     
+                     
+                     
+                     		var hiddenItems = 0,
+                     
+                     			showenItems = 0;
+                     
+                     		$(".portfolio_item").each(function(){
+                     
+                     			if ( $(this).hasClass('portfolio_hidden') ) {
+                     
+                     				hiddenItems++;
+                     
+                     			};
+                     
+                     		});
+                     
+                     
+                     
+                     		showenItems = items_count - hiddenItems;
+                     
+                     		if ( ($(this).attr('data-count')) > showenItems ) {
+                     
+                     			$(".pagination__posts").css({"display" : "block"});
+                     
+                     		} else {
+                     
+                     			$(".pagination__posts").css({"display" : "none"});
+                     
+                     		}
+                     
+                     		return false;
+                     
+                     	});
+                     
+                     	function change_hash(hash){
+                     
+                     		hash = hash.replace( /^.term/, 'category' );
+                     
+                     		window.location.href = '#'+hash;
+                     
+                     
+                     
+                     		$('.pagination a').each(function(){
+                     
+                     			var item = $(this),
+                     
+                     				href = item.attr('href'),
+                     
+                     				end_slice = href.indexOf('#')==-1 ? href.length : href.indexOf('#') ;
+                     
+                     
+                     
+                     			href = href.slice(0, end_slice);
+                     
+                     			item.attr({'href':href+'#'+hash})
+                     
+                     		})
+                     
+                     	}
+                     
+                     });
+
+                  </script>
+                 
+                 
+                  <?php if($num>0){?>
+                  <?php while($row = mysql_fetch_array($rst)){?>
+                  <li class="nt-event portfolio_item  <?php if($row['category']=="Club Crawl")
+                     {
+                     echo "term_id_1";
+                     } 
+                     else
+                     {
+                     	echo "term_id_2";
+                     }?> ">
+                     <div class="<?php if($row['category']=="Club Crawl")
+                        {
+                        echo "night-club-crawl";
+                        } 
+                        else
+                        {
+                        	echo "day-club-crawl";
+                        }?> ">
+                        <div class=" centerarea color-bg1">
+                           <div class="nt-event-date eventtime">
+                              
+                              <strong><?php if($row['event_date']!='0000-00-00 00:00:00'){echo date_i18n('l F j',strtotime($row['event_date']));}?></strong>
+                           </div>
+                           
+                            <div class="nt-event-price"><?php echo '$ '.intval($row['price']);?></div>
+						   <div class="nt-event-icon"></div>
+                           <div class="nt-event-body">
+                              <!-- get venues logos-->
+                              <?php
+                                 if($row['venue'] != '')
+                                $venu_arr = explode(',',$row['venue']);
+                                 
+								 
+								 
+								 if($row['schedule'] != '')
+                                 $time_arr = explode(',',$row['schedule']);
+                                 
+                                 
+                                 ?>
+                              <?php 
+							  $k = 1;
+							  foreach($venu_arr as $key=>$val){
+                                 $logo = get_venue_logo($val);
+								 $name = get_venue_name($val);
+								 $location = get_venue_location($val);
+								 
+								 $time = date_i18n('h:i A',strtotime($time_arr[$key]));
+								 
+								 $venue_var = '$venue'.$k;
+								 $time_var = '$time'.$k;
+								 $loc_var = '$location'.$k;
+								  
+								 $row['details'] = str_replace($venue_var,$name,$row['details']);
+								 $row['details'] = str_replace($time_var,$time,$row['details']);
+								 $row['details'] = str_replace($loc_var,$location,$row['details']);
+								 
+								 $k++;
+								 
+								 
+                                 ?>
+                              <div class="nt-event-logo">
+                                 <figure class="thumbnail thumbnail__portfolio">
+                                    <a href="<?php echo $upload_dir['baseurl'].'/NT/venue-logo/'.$logo;?>" class="image-wrap" title="" rel="prettyPhoto[gallery1]">
+                                    <img  src="<?php echo $upload_dir['baseurl'].'/NT/venue-logo/'.$logo;?>" />
+                                    
+                                    </a>
+                                 </figure>
+								 <div class="nt-venue-time"><?php echo $time;?></div>
+                                 <!--/.thumbnail__portfolio-->
+                              </div>
+                              <div class="devider centerarea">
+                                 <hr>
+                              </div>
+                              <?php } // foreach loop?> 
+                             
+                           </div>
+                        </div>
+                        <!--/.caption__portfolio-->
+						<script>
+						// When the user clicks on <div>, open the popup
+						function myFunction(id) {
+							var popup = document.getElementById('mydetailsPopup'+id);
+							
+							popup.classList.toggle('popit');
+							
+						}
+						
+						function myFunction1(id) {
+							var popup = document.getElementById('myreqPopup'+id);
+							
+							popup.classList.toggle('popit');
+						}
+				
+						</script>
+                        <div class="nt-event-details">
+						<div class="popup nt-title centerarea"><span onclick="myFunction(<?php echo $row['id'];?>)">Crawl Details</span></div>
+						<div class="popuptext" id="mydetailsPopup<?php echo $row['id'];?>">
+						 <?php echo $row['details'];?>	
+						 </br></br>
+						 We will send you all necesary information and the contact info of the host on the date of the event. Don't hesitate and purchase your 
+						 tickets before they are sold out. The price per ticket is <?php echo '$'.intval($row['price']);?>.
+						 </br></br>
+						 For additional information feel free to contact our affiliate associate <?php echo $affiliate_name;?> @ <?php echo $affiliate_phone;?></div>
+						</div>
+			
+                        <div class="nt-event-reqmt">
+						<div class="popup nt-title centerarea"><span onclick="myFunction1(<?php echo $row['id'];?>)">Requirements</span></div>
+						<div class="popuptext" id="myreqPopup<?php echo $row['id'];?>">
+						<?php echo $row['reqmt_txt'];?>	</div>		
+						</div>
+                        <div class="nt-event-buy centerarea"><span class="success" data-toggle="modal" data-target="#myModal<?php echo $row['id'];?>">Buy Tickets</span></div>
+                        
+                     </div>
+                     <!--/.portfolio_item_holder-->
+                  </li>
+                  <!--/.portfolio_item-->
+                  <!-- popp model window-->
+                  <div class="modal fade" id="myModal<?php echo $row['id'];?>" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <div class="modal-dialog">
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <div class="top-text">
+                                 <p>	Terms and conditions </p>
+                              </div>
+                           </div>
+                           <div class="modal-body leftarea for-area">
+                              <div class="">
+                                
+                                 <p><?php  echo get_post_meta('4189', 'terms', true);?></p>
+                                 <?php 
+								 if($row['venue'] !='')
+								 {
+								 	$venue_name_str = get_venu_name_str($row['venue']);
+								 }
+								 ?>
+                                 
+                                 
+                                <div class="">
+                                <input type="hidden" name="event_price" id="event_price<?php echo $row['id'];?>" value="<?php echo $row['price'];?>" />
+                                <input type="hidden" name="event_venue" id="event_venue<?php echo $row['id'];?>" value="<?php echo $venue_name_str;?>" />
+                                
+                                 <input type="hidden" name="event_date" id="event_date<?php echo $row['id'];?>" value="<?php echo date_i18n('l F j  ',strtotime($row['event_date']));?>" />
+                                
+                               <div> <input type="submit" name="term" id="<?php echo $row['id'];?>" class="submit-button1 termsx"  value="I Agree & continue to shopping card"></div>
+                                <br />
+                                <p class="topspace centerarea bluetext hidemodelx" data-dismiss="modal" ><b>I don't agree</b></p>
+                                
+                                </div>
+                              </div>
+                              </br>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <!-- popp model window-->
+                  <?php }} ?> 
+               </div>
+
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+
+
+<button style="display:none" type="button" data-toggle="modal" data-target="#myModal2" class="btn btn-succes succesxt">Success</button>
+
+ 				 <!-- popp model2 window -->
+                  <div class="modal fade" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <div class="modal-dialog">
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <div class="top-text">
+                                 <p> Contact Information </p>
+                              </div>
+							  <button type="button" class="close myclose" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                           </div>
+                           <div class="modal-body leftarea for-area">
+                              <div class="centerarea">
+                                 
+                                	<input type="hidden" name="my_event_id" id="my_event_id" value=""/>
+                                    <input type="hidden" name="my_event_price" id="my_event_price" value=""/>
+                                    <input type="hidden" name="my_event_venue" id="my_event_venue" value=""/>
+                                    
+                                    <div class=""><b>First Name</b></div>
+                                    <input type="text" name="first_name" id="fname" placeholder="" required />
+									<div class=""><b>Last Name</b></div>
+                                    <input type="text" name="last_name" id="lname" placeholder="" required />
+                                    <br />
+                                    <input type="checkbox" id="phone_mask" checked>
+									<label id="descr" for="phone_mask">????? ?????</label>
+                                    
+                                    <input type="tel" name="phone" id="customer_phone" value="" maxlength="18" placeholder="Phone Number" required /><br />
+                                    
+                                   <div class="ntimagex" id="addtodb"> <img  src="<?php echo $upload_dir['baseurl'].'/icons/virificationcode.png';?>" />
+								   </div>
+                                   <div class="mytxt"></div>
+								   <div class=""><b>Verification Code</b></div>
+								    <input type="tel" name="vcode" id="vcode" maxlength="6"  class=""  placeholder="" required />
+                                   
+                                    <div class=""><b>How many tickets?</b></div>
+                                    
+                                    <input type="tel" name="male" id="male" class="shortinput" placeholder="Male" required />
+                                    <input type="tel" name="female" id="female"  class="shortinput"  placeholder="Female" required />
+                                    <br />
+                                   <input type="submit" name="term" id="" class="submit-button1 nextbtn"  disabled="disabled" value="Next">
+                                    
+                                    
+                               </div>
+                              </br>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                 </div>
+                  <!-- popp model2 window-->
+                  
+                  
+               <button style="display:none" type="button" data-toggle="modal" data-target="#myModal3" class="btn btn-succes succesxt3">Success</button>   
+                  
+                  <!-- popp model3 window-->
+                  <div class="modal fade" id="myModal3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <div class="modal-dialog">
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <div class="top-text">
+                                 <p> Checkout  </p>
+                              </div>
+							  <button type="button" class="close close3btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                           </div>
+                           <div class="modal-body leftarea for-area eventlistarea">
+               
+                               <span class="payment-errors"><?php echo  $error; ?></span>
+                               <form name="form" action="#" method="POST" id="payment-form"  role="form" >  
+                                <div class="creditcard">      
+                                   
+                                 <div class="first-input">
+                                  <div class="images-card"></div>
+                                  <input id="mcard"  class="card-cvc" type="tel" name="card_number" maxlength="16" value="" required x-autocompletetype="cc-number" autocompletetype="cc-number" autocorrect="off" spellcheck="off" autocapitalize="off" placeholder="Card number">
+                                </div>
+                                <div class="sec-input left">
+                                  <div class="images-cal"></div>
+                                  <input id="mexp" class="card-expiry-month shortinput" type="tel"  name="exp_month" maxlength="5" value="" required placeholder="MM/YY" />
+                                </div>
+                                <div class="third-input left">
+                                  <div class="images-loc"></div>
+                                  <input class="card-cvv shortinput"  type="tel" name="cvv_code" value="" maxlength="4" required x-autocompletetype="cc-number" autocompletetype="cc-number" autocorrect="off" spellcheck="off" autocapitalize="off" placeholder="CVC" />
+                                </div>
+                               <div class="clear"> </div>
+                                     
+                                <div class="popemail">
+                                <input type="email" class="paytext" id="email" name="email" maxlength="50" value="" required   x-autocompletetype="email" autocompletetype="email" autocorrect="off" spellcheck="off" autocapitalize="off" placeholder="Email">
+                              </div> 
+                                
+                                </div>  
+                                 
+								<div class="">
+                               
+                                	<input type="hidden" name="my_event_idx" id="my_event_idx" value=""/>
+                                    <input type="hidden" name="my_event_pricex" id="my_event_pricex" value=""/>
+                                    <input type="hidden" name="first_namex" id="fnamex"  />
+                                    <input type="hidden" name="last_namex" id="lnamex" />
+                                    <input type="hidden" name="malex" id="malex"  />
+                                    <input type="hidden" name="femalex" id="femalex"  />
+                                    <input type="hidden" name="phonex" id="phonex"  />
+                                    <input type="hidden" name="amount" id="my_total_pricex"  />
+                                    <input type="hidden" name="my_event_venuex" id="my_event_venuex"  />
+                                    <input type="hidden" name="my_event_datex" id="my_event_datex"  />
+                                    <input type="hidden" name="user_affiliate_id" id="user_affiliate_id" value="<?php echo $affiliate_ID;?>"  />
+                                    
+                                    
+                              <div class="title3">
+                                    <div> Event date  - <b class="my_event_date_txt"> </b></div>
+                                    <div> Ticket Price - $<b class="my_event_price_txt"> </b></div>
+                                    <div> Tickets - <b class="my_total_group_txt"> </b></div>
+                                    <div> Grand Total  - $<b class="my_total_price_txt"> </b></div>
+                                 
+                                 </div>                                   
+									<div class="span5">
+                                   		<input type="submit" name="next3" id="payout" class="submit-button1 "  value="Pay $GrandTotal ">
+                                    </div>
+                                    
+								</div>
+                                 
+                               </form>   
+                              </br>
+							 
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                 </div>
+                  <!-- popp model3 window-->
+                  
+                  
+                  
+                   <button style="display:none" type="button" data-toggle="modal" data-target="#myModal4" class="btn btn-succes succesxt4">Success</button>   
+                  
+                  <!-- popp model4 window-->
+                  <div class="modal fade" id="myModal4" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                     <div class="modal-dialog">
+                        <div class="modal-content">
+                           <div class="modal-header">
+                              <div class="top-text">
+                                 <p> Order Completed </p>
+                              </div>
+							  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                           </div>
+                           <div class="modal-body leftarea for-area ">
+               
+                               <span class="title3">The card was charged successfully .</span> </br></br>
+							   <span >We are going to send you text notifications with the schedule. 
+								The information about the host will be sent to you on the day of the event or the day before.</span></br>
+								<span >Feel free to share this page with your friends if they want to join you since the tickets must be purchased in advance.</span></br></br>
+							   <span >If you have any questions about your purchase please contact us immediately @ 702-323-5445</span></br>
+                               
+                              </br>
+							 
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                 </div>
+                  <!-- popp model4 window-->
+                  
+                  
+                  
+                  
+                  <div class="span12">
+                  <strong>
+                     <em>
+                        <div class="pagination pagination__posts">
+                           <ul>
+                              <?php
+                                 $sq1_pagi = 'select TIME_TO_SEC(TIMEDIFF(cnt.event_date , "'.$todaytime.'")) as diff , cnt.* from club_nt as cnt '.$con.' HAVING (diff > 0)';
+                                 $rs_result = mysql_query($sq1_pagi); //run the query
+                                 $total_records = mysql_num_rows($rs_result);  //count number of records
+                                 $total_pages = ceil($total_records / $num_rec_per_page); 
+                                 $u =   get_bloginfo('url');
+                                 $url = '';
+                                 
+                                 echo "<li><a class='pagi' href=' ".$u."/cc".$affiliate_ID."/?custompage=1".$url."'>".'|<'."</a></li> "; // Goto 1st page 
+                                 for ($i=1; $i<=$total_pages; $i++) { 
+                                 echo "<li><a class='pagi' href='".$u."/cc".$affiliate_ID."/?custompage=".$i."".$url."'>".$i."</a></li> "; 
+                                 }; 
+                                 
+                                 echo "<li><a class='pagi' href='".$u."/cc".$affiliate_ID."/?custompage=$total_pages".$url."'>".'>|'."</a> </li>"; // Goto last page
+                                 ?>
+                           </ul>
+                        </div>
+                     </em>
+                  </strong>
+               </div>
+               
+               
+               
+<script>
+
+$("#vcode").change(function(){
+	
+	if($('#vcode').val()!='')
+	{
+	$('.nextbtn').removeAttr('disabled');
+	return true;
+	}
+	else if($('#vcode').val() =='')
+	{
+	$('.nextbtn').attr('disabled','disabled');
+	return false;
+	}
+	$('#my_event_id').focus();
+		
+	
+});
+
+</script>               
+               
+
+
+               
+               
+<script type="text/javascript">
+
+// this identifies your website in the createToken call below
+
+ Stripe.setPublishableKey('<?php  echo $publishable_key = trim(get_post_meta('4189', 'publishable_key', true))?>');
+//Stripe.setPublishableKey('pk_test_QVFtse9EIwiC2V2oNwbMKNLa');
+
+function stripeResponseHandler(status, response) {
+	
+	if (response.error) {
+	// re-enable the submit button
+	$('.submit-button').removeAttr("disabled");
+	// show the errors on the form
+	$(".payment-errors").html(response.error.message);
+	} else {
+	var form$ = $("#payment-form");
+	// token contains id, last4, and card type
+	var token = response['id'];
+	// insert the token into the form so it gets submitted to the server
+	form$.append("<input type='hidden' name='stripeToken' value='" + token + "' />");
+	// and submit
+	//	form$.get(0).submit();
+
+	// process card
+	var fname = $('#fnamex').val();
+	var lname = $('#lnamex').val();
+	var phone = $('#phonex').val();
+	var email = $('#email').val();
+	var male = $('#malex').val();
+	var female = $('#femalex').val();
+	var total = $('#my_total_pricex').val();
+	var affiliate_id = $('#user_affiliate_id').val();
+	var event_id = $('#my_event_idx').val();
+
+if(token !=''){
+$('.close3btn').trigger('click');
+
+	$.ajax({
+	type: "POST",
+	datatype: 'json',
+	url: "<?php  bloginfo( 'template_url' ); ?>/NT/ntcc_stripe_charge_ajax.php",
+	data: {male: male,female: female,fname: fname,lname: lname,email: email,phone: phone,affiliate_id: affiliate_id,event_id : event_id , amount : total , stripeToken:token},  
+	
+	success: function(data)
+	{ 
+		//alert(data);
+		if(data == 1)
+		{   
+			$('#fname').val('');
+			$('#lname').val('');
+			$('#male').val('');
+			$('#female').val('');
+			$('#email').val('');
+			$('#customer_phone').val('');
+			$('#vcode').val('');
+			$('#payment-form').trigger("reset");
+			$('.success-message').text('Card has beec charged successfully.');
+			$('.succesxt4').trigger('click');
+			return true;
+			
+		}
+		else if(data == 0)
+		{
+			alert('Something went wrong... Check your card information and try again.');
+			return false;
+		}
+		else
+		{
+			
+			alert(data);
+			return false;
+		}
+		
+	}
+	
+	});
+}	
+}
+}
+$(document).ready(function() {
+$("#payment-form").submit(function(event) {
+var msg = '';
+if($('#fnamex').val()=='')
+{
+var msg = msg + "Please Enter First Name";
+}
+else if($('#lnamex').val()=='')
+{
+var msg = msg + "Please Enter Last Name";
+}
+else if($('#email').val()=='')
+{
+var msg = msg + "Please Enter Email";
+}
+else if($('#phonex').val()=='')
+{
+var msg = msg + "Please Enter Cell Phone";
+}
+else if($('#my_event_idx').val()=='')
+{
+var msg = msg + "Event Id is empty ";
+}
+
+else if($('#user_affiliate_id').val()=='')
+{
+	var msg = msg + "Refferal  Id is empty ";
+}
+
+else if($('#my_total_pricex').val()=='')
+{
+var msg = msg + "Please select for  how many  people are you purchasing ticket ?";
+}
+if(msg!='')
+{
+$(".payment-errors").html(msg);
+return false;
+}
+// disable the submit button to prevent repeated clicks
+$('.submit-button').attr("disabled", "disabled");
+// createToken returns immediately - the supplied callback submits the form if there are no errors
+
+var card_number = $('#mcard').val();
+var card = card_number.replace(/\s+/g, '');
+
+var expp =  $('.card-expiry-month').val()
+var expp = expp.split('/');
+var month = expp[0];
+var year = expp[1];
+
+ Stripe.createToken({
+number: card,
+cvc: $('.card-cvv').val(),
+exp_month: month,
+exp_year: year
+}, stripeResponseHandler);
+
+return false; // submit from callback
+
+
+
+});
+});
+</script>              
+               
+<script>
+
+$(".termsx").click(function(){
+
+	$('.hidemodelx').trigger('click');
+	
+	// get val
+	var id = this.id;
+	var event_price = $('#event_price'+id).val();
+	var event_venue = $('#event_venue'+id).val();
+	var event_date = $('#event_date'+id).val();
+	
+	
+	
+	// set val
+	$('.myidtxt').text(id);
+	$('#my_event_id').val(id);
+	$('#my_event_price').val(event_price);
+	$('#my_event_venue').val(event_venue);
+	
+	
+	
+	$(".nextbtn").attr("id",id);
+	$('.succesxt').trigger('click');
+
+});
+
+
+
+$(".nextbtn").click(function(){
+
+	var id = this.id;
+	
+	var event_price = $('#event_price'+id).val();
+	var event_venue = $('#event_venue'+id).val();
+	var event_date = $('#event_date'+id).val();
+	
+	var vcode = $('#vcode').val();
+	var phone = $('#customer_phone').val();
+	var fname = $('#fname').val();
+	var lname = $('#lname').val();
+	
+	var male = $('#male').val();
+	var female = $('#female').val();
+	
+	if(male == '')
+	{
+		var male = 0;
+	}
+	else if(female == '')
+	{
+		var female = 0;
+	}
+	
+	var total_people = parseInt(male) + parseInt(female);
+	var total_price = total_people * parseInt(event_price);
+	
+	
+	
+	if(fname == '')
+	{
+		alert("Please enter your first name");
+		return false;
+	}
+	
+	
+	else if(lname == '')
+	{
+		alert("Please enter your last name");
+		return false;
+	}
+	
+	else if(phone == '')
+	{
+		alert("Please enter your phone number");
+		return false;
+	}
+	
+	
+	else if(male == '' && female == '')
+	{
+		alert("How many tickets?");
+		return false;
+	}
+	
+	else if(vcode == '')
+	{
+		alert("Please enter the verifcation code");
+		return false;
+	}
+	
+	
+	
+	$.ajax({
+	type: "POST",
+	datatype: 'json',
+	url: "<?php  bloginfo( 'template_url' ); ?>/verify_code_ajax.php",
+	data: {male: male,female: female,fname: fname,lname: lname,vcode: vcode,phone: phone,},  
+	success: function(data)
+	{ 
+		
+		if(data == 1)
+		{
+			$('.myclose').trigger('click');
+			
+			
+			// refersh model 2 
+			
+			$('#fname').val('');
+			$('#lname').val('');
+			$('#male').val('');
+			$('#female').val('');
+			$('#customer_phone').val('');
+			$('#vcode').val('');
+			
+			
+			
+			// add velue in model3
+			$('#my_event_idx').val(id);
+			$('#my_event_pricex').val(event_price);
+			$('#my_event_venuex').val(event_venue);
+			$('#my_event_datex').val(event_date);
+			
+			
+			
+			$('#malex').val(male);
+			$('#femalex').val(female);
+			
+			$('#fnamex').val(fname);
+			$('#lnamex').val(lname);
+			$('#phonex').val(phone);
+			
+			$('#my_total_pricex').val(total_price);
+			$('#payout').val('pay $'+total_price);
+			
+			// add text in model3
+			$('.my_event_id_txt').text(id);
+			$('.my_event_price_txt').text(event_price);
+			$('.my_male_txt').text(male);
+			$('.my_female_txt').text(female);
+			$('.my_fname_txt').text(fname);
+			$('.my_lname_txt').text(lname);
+			$('.my_phone_txt').text(phone);
+			$('.my_total_group_txt').text(total_people);
+			$('.my_total_price_txt').text(total_price);
+			$('.my_event_venue_txt').text(event_venue);
+			$('.my_event_date_txt').text(event_date);
+			
+			$('.succesxt3').trigger('click');
+			
+		
+			//alert(data);
+		}
+		else if(data == 0)
+		{
+			alert("verification code is not correct");
+			$('#customer_phone').val('');
+			$('#vcode').val('');
+			$('.ntimagex').css('display','block');
+		}
+		else
+		{
+			alert(data);
+			return false;
+		}
+		
+	}
+	
+	});
+
+
+
+
+});
+
+
+$("#addtodb").click(function(){
+    
+	
+	var fname = $('#fname').val();
+	var lname = $('#lname').val();
+	var phone = $('#customer_phone').val();
+	
+	if(fname == '')
+	{
+		alert("Please enter your First Name");
+		return false;
+	}
+	else if(lname == '')
+	{
+		alert("Please enter your Last Name");
+		return false;
+	}
+	
+	else if(phone == '')
+	{
+		alert("Please enter your Phone Number ");
+		return false;
+	}
+	
+	//alert(phone);
+	
+	$.ajax({
+	type: "POST",
+	datatype: 'json',
+	url: "<?php  bloginfo( 'template_url' ); ?>/nt_event_list_ajax.php",
+	data: {fname: fname,lname: lname,phone: phone,},  
+	success: function(data)
+	{ 
+		
+		if(data == 1)
+		{
+			$('.ntimagex').css('display','none');
+			$('.mytxt').text('Verification code was texted to you');
+			return true;
+		}
+		else if(data == 0)
+		{
+		$('.ntimagex').css('display','block');
+		$('.mytxt').text('Phone number is not valid !');
+		return false;
+		}
+		else
+		{
+			
+			alert(data);
+			return false;
+		}
+		
+	}
+	
+	});
+	
+	
+	
+});
+
+</script>
+
+<script>
+            var maskList = $.masksSort($.masksLoad("<?php  bloginfo('template_url');?>/inputmask-multi-master/data/phone-codes.json"), ['#'], /[0-9]|#/, "mask");
+            var maskOpts = {
+                inputmask: {
+                    definitions: {
+                        '#': {
+                            validator: "[0-9]",
+                            cardinality: 1
+                        }
+                    },
+                    showMaskOnHover: false,
+                    autoUnmask: true,
+                    clearMaskOnLostFocus: false
+                },
+                match: /[0-9]/,
+                replace: '#',
+                list: maskList,
+                listKey: "mask",
+                onMaskChange: function(maskObj, determined) {
+                    if (determined) {
+                        var hint = maskObj.name_en;
+                        if (maskObj.desc_en && maskObj.desc_en != "") {
+                            hint += " (" + maskObj.desc_en + ")";
+                        }
+                        $("#descr").html(hint);
+                    } else {
+                        $("#descr").html("Country code & phone#");
+                    }
+                }
+            };
+
+            $('#phone_mask').change(function() {
+                if ($('#phone_mask').is(':checked')) {
+                    $('#customer_phone').inputmask("remove");
+                    $('#customer_phone').inputmasks(maskOpts);
+                } else {
+                    $('#customer_phone').inputmasks("remove");
+                    $('#customer_phone').inputmask("+#{*}", maskOpts.inputmask);
+                    $("#descr").html("Country code & phone#");
+                }
+            });
+
+            $('#phone_mask').change();
+        </script>
+
+
+
+
+
+
+
+
+
+
+<script>
+
+jQuery(function($){
+$("#mcard").mask("9999 9999 9999 9999");
+$("#mexp").mask("99/99",{placeholder:"MM/YY"});
+
+});
+</script>            
